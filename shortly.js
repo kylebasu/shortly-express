@@ -2,6 +2,7 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
+var session = require('express-session');
 
 
 var db = require('./app/config');
@@ -22,25 +23,40 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
+app.use(session({secret: 'jkdslahvlas;fhvualvchakhjvhasuvbaskdfvhasufbcLCXhbv', cookie: { maxAge: 60000 }}));
 
-app.get('/', 
+var isLoggedIn = function(req, res, next){
+  // if req.sessionID is in database
+  // Check to see if it matches
+  var user;
+  // user = db.Users.find({sessionID: req.sessionID});
+  if(user){
+    // Your Authenticated!
+    next();
+  } else {
+    res.redirect('/login');
+  }
+};
+
+// app.get('/', function(req, res, next){return isLoggedIn(req, res, next);},
+app.get('/', isLoggedIn,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/create', 
+app.get('/create', isLoggedIn,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/links', 
+app.get('/links', isLoggedIn,
 function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
 });
 
-app.post('/links', 
+app.post('/links', isLoggedIn,
 function(req, res) {
   var uri = req.body.url;
 
@@ -78,7 +94,20 @@ function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 
+app.get('/login', function(req, res){
+  res.render('login');
+});
 
+// app.post('/signup', function(req, res){
+//   // Modify the Data
+//   var user = new User({
+//     username:req.body.username, 
+//     password:req.body.password
+//   });
+//   user.save().then(function(){
+//     res.redirect('/');
+//   });
+// });
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
