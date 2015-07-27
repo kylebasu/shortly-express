@@ -63,25 +63,24 @@ describe('', function() {
 
     var requestWithSession = request.defaults({jar: true});
 
-var xbeforeEach = function(){};
+    var xbeforeEach = function(){};
       // create a user that we can then log-in with
-      new User({
+    new User({
+        'username': 'Phillip',
+        'password': 'Phillip'
+    }).save().then(function(){
+      var options = {
+        'method': 'POST',
+        'followAllRedirects': true,
+        'uri': 'http://127.0.0.1:4568/login',
+        'json': {
           'username': 'Phillip',
           'password': 'Phillip'
-      }).save().then(function(){
-        var options = {
-          'method': 'POST',
-          'followAllRedirects': true,
-          'uri': 'http://127.0.0.1:4568/login',
-          'json': {
-            'username': 'Phillip',
-            'password': 'Phillip'
-          }
-        };
-        // login via form and save session info
-        requestWithSession(options, function(error, res, body) {
-          done();
-        });
+        }
+      };
+      // login via form and save session info
+      requestWithSession(options, function(error, res, body) {
+        done();
       });
     });
 
@@ -137,12 +136,12 @@ var xbeforeEach = function(){};
       it('Fetches the link url title', function (done) {
         requestWithSession(options, function(error, res, body) {
           db.knex('urls')
-            .where('title', '=', 'Funny animal pictures, funny animals, funniest dogs')
+            .where('title', '=', 'Funny pictures of animals, funny dog pictures')
             .then(function(urls) {
               if (urls['0'] && urls['0']['title']) {
                 var foundTitle = urls['0']['title'];
               }
-              expect(foundTitle).to.equal('Funny animal pictures, funny animals, funniest dogs');
+              expect(foundTitle).to.equal('Funny pictures of animals, funny dog pictures');
               done();
             });
         });
