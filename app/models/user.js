@@ -1,22 +1,28 @@
 var db = require('../config');
-var bcrypt = require('bcrypt-nodejs');
+var bcrypt = require('bcrypt');
 var Promise = require('bluebird');
 
 var User = db.Model.extend({
-  // tableName: 'users',
-  // initialize: function(){
-  //   this.on('creating', function(model, attrs, options){
-  //     var password = model.get('password');
-
-  //     bcrypt.genSalt(20, function(err, salt){
-  //       model.set('salt', salt);
-  //       bcrypt.hash(password, salt, null, function(err, hash) {
-  //           // Store hash in your password DB.
-  //           model.set('password', hash);
-  //       });
-  //     });
-  //   });
-  // }
+  tableName: 'users',
+  //hasTimestamps: true,
+  initialize: function(){
+    this.on('creating', function(model, attrs, options){
+      console.log('creating a user');
+      var password = model.get('password');
+      bcrypt.genSalt(5, function(err, salt){
+        model.set('salt', salt);
+        console.log("salt:", salt);
+        bcrypt.hash(password, salt, function(err, hash) {
+            // Store hash in your password DB.
+            console.log("hash:",hash);
+            model.set('password', hash);
+            console.log(model.get('password'));
+            console.log(model.get('salt'));
+            model.save();
+        });
+      });
+    });
+  }
 });
 
 module.exports = User;

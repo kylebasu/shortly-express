@@ -3,7 +3,7 @@ var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
 var session = require('express-session');
-
+var bcrypt = require('bcrypt');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -28,17 +28,18 @@ app.use(session({secret: 'jkdslahvlas;fhvualvchakhjvhasuvbaskdfvhasufbcLCXhbv', 
 var isLoggedIn = function(req, res, next){
   // if req.sessionID is in database
   // Check to see if it matches
-  var user;
-  // user = db.Users.find({sessionID: req.sessionID});
-  if(user){
-    // Your Authenticated!
-    next();
-  } else {
-    res.redirect('/login');
-  }
+  Users.query({where:{sessionID: req.sessionID}}).fetch().then(function(model){
+    if(model.length > 0){
+      // Your Authenticated!
+      next();
+    } else {
+      res.redirect('/login');
+    }
+    
+  });
 };
 
-// app.get('/', function(req, res, next){return isLoggedIn(req, res, next);},
+//app.get('/', function(req, res, next){return isLoggedIn(req, res, next);},
 app.get('/', isLoggedIn,
 function(req, res) {
   res.render('index');
@@ -98,16 +99,50 @@ app.get('/login', function(req, res){
   res.render('login');
 });
 
-// app.post('/signup', function(req, res){
-//   // Modify the Data
-//   var user = new User({
-//     username:req.body.username, 
-//     password:req.body.password
-//   });
-//   user.save().then(function(){
-//     res.redirect('/');
-//   });
-// });
+app.post('/login', function(req, res){
+  // Handle Login
+  // get user by username from the database
+  Users.query().where({username: req.body.username}).fetch().then(function(model){
+    if(model.length > 0){
+      // The username exists
+      console.log(model);
+
+      // has the model.password
+      bcrypt.compare(req.body.password, model.get('password'), function(err, res) {
+        if(res){
+          model.set('sessionID', req.sessionID);
+          model.save();
+          res.redirect('/');
+        } else {
+          res.redirect('/login');
+        }
+      });
+    } else {
+      res.redirect('/login');
+    }
+    
+  });
+  // hash the password and compare
+    // if there's a corresponding data entry
+      // redirect to /
+  // else leave at login page
+});
+
+app.get('/signup', function(req, res){
+  res.render('signup');
+});
+
+app.post('/signup', function(req, res){
+  // Modify the Data
+  var user = new User({
+    username:req.body.username, 
+    password:req.body.password,
+    sessionID:req.sessionID
+  });
+  user.save().then(function(){
+    res.redirect('/');
+  });
+});
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
