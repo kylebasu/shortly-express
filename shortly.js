@@ -102,30 +102,27 @@ app.get('/login', function(req, res){
 app.post('/login', function(req, res){
   // Handle Login
   // get user by username from the database
-  Users.query().where({username: req.body.username}).fetch().then(function(model){
+  //Users.query({where:{username: req.body.username}}).fetch().then(function(model){
+  Users.query({where:{username: req.body.username}}).fetch().then(function(model){
     if(model.length > 0){
-      // The username exists
-      console.log(model);
-
-      // has the model.password
-      bcrypt.compare(req.body.password, model.get('password'), function(err, res) {
-        if(res){
-          model.set('sessionID', req.sessionID);
-          model.save();
+      // username exists
+      // check password
+      var user = model.models[0];
+      bcrypt.compare(req.body.password, user.get('password'), function(err, match) {
+        if(match){
+          user.set('sessionID', req.sessionID);
+          user.save();
           res.redirect('/');
         } else {
           res.redirect('/login');
         }
       });
     } else {
+      // username does not exist
       res.redirect('/login');
     }
     
   });
-  // hash the password and compare
-    // if there's a corresponding data entry
-      // redirect to /
-  // else leave at login page
 });
 
 app.get('/signup', function(req, res){
@@ -141,6 +138,19 @@ app.post('/signup', function(req, res){
   });
   user.save().then(function(){
     res.redirect('/');
+  });
+});
+
+app.get('/logout', function(req, res){
+  Users.query({where:{sessionID: req.sessionID}}).fetch().then(function(model){
+    if(model.length > 0){
+      // Your Authenticated!
+      var user = model.models[0];
+      user.set('sessionID', '');
+      user.save();
+    }
+    res.redirect('/login');
+    
   });
 });
 

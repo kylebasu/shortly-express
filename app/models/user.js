@@ -9,15 +9,11 @@ var User = db.Model.extend({
     this.on('creating', function(model, attrs, options){
       console.log('creating a user');
       var password = model.get('password');
-      bcrypt.genSalt(5, function(err, salt){
+      bcrypt.genSalt(10, function(err, salt){
         model.set('salt', salt);
-        console.log("salt:", salt);
         bcrypt.hash(password, salt, function(err, hash) {
             // Store hash in your password DB.
-            console.log("hash:",hash);
             model.set('password', hash);
-            console.log(model.get('password'));
-            console.log(model.get('salt'));
             model.save();
         });
       });
